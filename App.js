@@ -5,11 +5,30 @@ import {
   Text,
   View,
   TouchableWithoutFeedback,
+  ImageBackground,
+  StatusBar,
+  Button,
 } from "react-native";
+import AppLoading from "expo-app-loading";
+
 import Bird from "./components/Bird";
 import Obstacles from "./components/Obstacles";
+import background from "./assets/background-day.png";
+//import {useFonts} from 'expo-font'
+import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
+
+
+
 
 export default function App() {
+ /*  let [fontsLoaded] = useFonts({
+    "PressStart2P": require("./assets/fonts/PressStart2P-Regular.ttf"),
+  }); */
+
+
+    let [fontsLoaded] = useFonts({
+    PressStart2P_400Regular,
+  });
   const screenWidth = Dimensions.get("screen").width;
   const screenHeight = Dimensions.get("screen").height;
   const birdLeft = screenWidth / 2;
@@ -21,6 +40,7 @@ export default function App() {
   const [obstacleNHeight, setObstacleNHeight] = useState(0);
   const [obstacleNHeightTwo, setObstacleNHeightTwo] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isPause, setIsPause] = useState(false)
   const [score, setScore] = useState(0);
   const obstaclesWidth = 60;
   const obstaclesHeight = 300;
@@ -55,6 +75,7 @@ export default function App() {
       }, 30);
       return () => {
         clearInterval(obstaclesTimerId);
+        setIsPause(true)
       };
     } else {
       setObstaclesLeft(screenWidth);
@@ -72,6 +93,7 @@ export default function App() {
       }, 30);
       return () => {
         clearInterval(obstaclesTimerIdTwo);
+        setIsPause(true)
       };
     } else {
       setObstaclesLeftTwo(screenWidth);
@@ -84,66 +106,98 @@ export default function App() {
   useEffect(() => {
     if (
       // first obstacle
-      ((birdBottom < (obstacleNHeight + obstaclesHeight + 30)
-        ||
-        birdBottom > (obstacleNHeight + obstaclesHeight + gap - 30))
-        &&
-        (obstaclesLeft > screenWidth / 2 - 30 && obstaclesLeft < screenWidth / 2 + 30)
-      )
-        ||
+      ((birdBottom < obstacleNHeight + obstaclesHeight + 30 ||
+        birdBottom > obstacleNHeight + obstaclesHeight + gap - 30) &&
+        obstaclesLeft > screenWidth / 2 - 30 &&
+        obstaclesLeft < screenWidth / 2 + 30) ||
       // second obstacle
-        ((birdBottom < (obstacleNHeightTwo + obstaclesHeight + 30)
-          ||
-        birdBottom > (obstacleNHeightTwo + obstaclesHeight + gap - 30))
-        &&
-       ( obstaclesLeftTwo > screenWidth / 2 - 30  &&obstaclesLeftTwo < screenWidth / 2 + 30)
-      )
-      ) 
-    {
-      gameOver()
+      ((birdBottom < obstacleNHeightTwo + obstaclesHeight + 30 ||
+        birdBottom > obstacleNHeightTwo + obstaclesHeight + gap - 30) &&
+        obstaclesLeftTwo > screenWidth / 2 - 30 &&
+        obstaclesLeftTwo < screenWidth / 2 + 30)
+    ) {
+      gameOver();
     }
-  })
+  });
 
   const gameOver = () => {
-    clearInterval(gameTimerId)
-    clearInterval(obstaclesTimerId)
-    clearInterval(obstaclesTimerIdTwo)
-    setIsGameOver(true)
-  }
-  return (
-    <TouchableWithoutFeedback onPress={jump}>
-      <View style={styles.container}>
-        {isGameOver && <Text>{score}</Text>}
-        <Bird
-          birdBottom = {birdBottom}
-          birdLeft = {birdLeft}
-        />
-        <Obstacles
-           color={'green'}
-           obstaclesWidth = {obstaclesWidth}
-          obstaclesHeight = {obstaclesHeight}
-          randomBottom = {obstacleNHeight}
-          gap = {gap}
-          obstaclesLeft = {obstaclesLeft}
-        />
-        <Obstacles
-          color = {"yellow"}
-          obstaclesWidth = {obstaclesWidth}
-          obstaclesHeight = {obstaclesHeight}
-          randomBottom = {obstacleNHeightTwo}
-          gap = {gap}
-          obstaclesLeft = {obstaclesLeftTwo}
-        />
-      </View>
+    clearInterval(gameTimerId);
+    clearInterval(obstaclesTimerId);
+    clearInterval(obstaclesTimerIdTwo);
+    setIsGameOver(true);
+  };
+  const pauseGame = () => {
+    clearInterval(gameTimerId);
+    setIsPause(true)
+    clearInterval(obstaclesTimerId);
+    clearInterval(obstaclesTimerIdTwo);
+  };
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  } else {
+    
+    return (
+      <TouchableWithoutFeedback onPress={jump}>
+      <ImageBackground style={styles.image} source={background}>
+        <View>
+          <Text style={styles.score}>SCORE: {score}</Text>
+           <Button
+            style={styles.restart}
+            onPress={pauseGame}
+            title="Pause Game"
+            /> 
+        </View>
+        <View style={styles.container}>
+          {isGameOver && <Text>{score}</Text>}
+          <Bird birdBottom={birdBottom} birdLeft={birdLeft} />
+          <Obstacles
+            color={"green"}
+            obstaclesWidth={obstaclesWidth}
+            obstaclesHeight={obstaclesHeight}
+            randomBottom={obstacleNHeight}
+            gap={gap}
+            obstaclesLeft={obstaclesLeft}
+            />
+          <Obstacles
+            color={"yellow"}
+            obstaclesWidth={obstaclesWidth}
+            obstaclesHeight={obstaclesHeight}
+            randomBottom={obstacleNHeightTwo}
+            gap={gap}
+            obstaclesLeft={obstaclesLeftTwo}
+            />
+        </View>
+      </ImageBackground>
     </TouchableWithoutFeedback>
   );
+}
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  image: {
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center",
+  },
+  score: {
+    //position: "relative",
+    top: 50,
+    left: 0,
+    fontSize: 15,
+    //backgroundColor: "#fff",
+    //width: 100,
+    zIndex: 1,
+    fontFamily: "PressStart2P_400Regular",
+  },
+  restart: {
+    width: 50,
+    top: 50,
+    right: 0,
   },
 });
